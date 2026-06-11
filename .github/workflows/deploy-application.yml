@@ -1,0 +1,60 @@
+name: Deploy Application
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - application/**
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: application/package-lock.json
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-2
+
+      - name: Install dependencies
+        working-directory: application
+        run: npm ci
+
+      - name: Install webhook-receiver dependencies
+        working-directory: application/src/webhook-receiver
+        run: npm ci
+
+      - name: Build webhook-receiver
+        working-directory: application/src/webhook-receiver
+        run: npx tsc
+
+      - name: Install github-client dependencies
+        working-directory: application/src/github-client
+        run: npm ci
+
+      - name: Build github-client
+        working-directory: application/src/github-client
+        run: npm run build
+
+      - name: Install orchestrator dependencies
+        working-directory: application/src/orchestrator
+        run: npm ci
+
+      - name: Build orchestrator
+        working-directory: application/src/orchestrator
+        run: npx tsc --build
+
+      - name: Deploy ApplicationStack
+        working-directory: application
+        run: npx cdk deploy ApplicationStack --require-approval never

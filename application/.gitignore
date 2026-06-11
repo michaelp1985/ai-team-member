@@ -1,0 +1,16 @@
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+node_modules/
+cdk.out/
+
+# TypeScript compiled output
+*.js
+*.d.ts
+*.js.map
+!jest.config.js
+
+# Lambda build artifacts
+dist/
+*.zip
