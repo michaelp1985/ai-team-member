@@ -128,18 +128,81 @@ Replace the Personal Access Token with a GitHub App so agent comments post as `a
 
 ## Phase 8 — Issue Comment Threading
 
-Allow the agent to respond to follow-up comments posted on an issue after the initial triage. GitHub fires `issue_comment` as a separate event type from `issues` — it is not currently registered or handled.
+Allow the agent to receive and normalize `issue_comment` events. GitHub fires `issue_comment` as a separate event type from `issues` — it is not currently registered or handled. Directed response logic and system prompt are in Phase 10.
 
 ### Steps
 
 - [ ] Enable **Issue comments** event on the GitHub webhook
-- [ ] Add `issue_comment` to `SUPPORTED_EVENTS` in `normalize.ts`
+- [ ] Add `issue_comment` to `SUPPORTED_EVENTS` in `normalize.ts` and `WebhookEventType`
 - [ ] Add `issue_comment` normalizer case in `normalizePayload` — payload shape: `issue.number`, `comment.body`, `repository`
-- [ ] Add `issue_comment.created` system prompt in `prompts.ts` — agent is responding to a thread comment, not triaging a new issue
 
 ---
 
-## Phase 9 — GitHub Projects v2 Support
+## Phase 9 — Observability
+
+Add structured, traceable logging across all components. A correlation ID threads from API Gateway through the webhook-receiver and into the orchestrator so every log line for a single GitHub event can be grouped in CloudWatch. No log viewer or external tooling required — all output is structured JSON to stdout, which Lambda routes to CloudWatch Logs automatically.
+
+### Steps
+
+- [ ] Add `correlationId: string` to `WebhookEvent` in `normalize.ts` — populated from API Gateway `requestContext.requestId` in the webhook-receiver handler before normalization
+- [ ] Add `logger.ts` to `src/webhook-receiver/` — emits structured JSON `{ level, component, correlationId, event, timestamp, ...extras }` to stdout
+- [ ] Add `logger.ts` to `src/orchestrator/` — same schema as webhook-receiver logger; component value is `"orchestrator"`
+- [ ] Instrument `src/webhook-receiver/index.ts`:
+  - `request.received` — correlationId, eventType header, repo
+  - `signature.verified` — pass/fail (no secret value)
+  - `event.normalized` — eventType, action, itemNumber
+  - `orchestrator.invoked` — correlationId forwarded
+- [ ] Instrument `src/orchestrator/index.ts`:
+  - `event.received` — correlationId, eventType, action, repo, itemNumber
+  - `history.loaded` — messageCount
+  - `history.saved` — messageCount
+- [ ] Instrument `src/orchestrator/loop.ts`:
+  - `bedrock.invoke` — iteration index, modelId (no prompt or message content)
+  - `bedrock.response` — stopReason, inputTokens, outputTokens
+  - `tool.dispatch` — toolName (no input payload)
+  - `tool.result` — toolName, success or error message
+  - `loop.end` — totalIterations, finalStopReason
+
+---
+
+## Phase 10 — Issue Comment Directed Response
+
+Extend Phase 8 threading to filter for comments directed at the bot and respond to them as a Q&A interaction rather than a triage. Depends on Phase 8.
+
+### Steps
+
+- [ ] Add `senderIsBot: boolean` to `WebhookEvent` — computed in `normalizePayload` from `sender.type === 'Bot' || sender.login.endsWith('[bot]')`; set to `false` for all non-`issue_comment` event types
+- [ ] Add `BOT_MENTION_SLUG` environment variable to `orchestrator-lambda.ts` CDK construct — value: `@sdlc-agent-petty`
+- [ ] Add guards in `src/orchestrator/index.ts` before invoking the Converse loop:
+  - If `event.senderIsBot` → return early (prevents self-reply loop)
+  - If `event.eventType === 'issue_comment'` and comment body does not contain `BOT_MENTION_SLUG` → return early
+- [ ] Add `issue_comment.created` system prompt in `prompts.ts`:
+  - Agent is answering a specific directed question — not triaging
+  - Instructs use of `get_issue` for issue context and prior conversation history already loaded
+  - Instructs use of `post_comment` to reply
+  - Explicitly prohibits re-triaging, re-labeling, or repeating prior analysis
+
+---
+
+## Phase 11 — Issue Completeness Check
+
+When a new issue is opened, evaluate whether it contains enough information to be acted on before proceeding to triage. Implemented entirely as a system prompt update — no new tools or code logic required.
+
+### Steps
+
+- [ ] Rewrite `issuesOpened` system prompt in `prompts.ts`:
+  1. Use `get_issue` to read the issue title and body
+  2. Evaluate completeness: does the issue have a **meaningful description** (more than a title or one-liner)? Does it have **acceptance criteria or deliverables**?
+  3. Post a comment via `post_comment` with:
+     - Brief findings (what was found or missing)
+     - Verdict: **"✅ Ready for work"** or **"⚠️ Needs review"**
+     - If "needs review": bulleted list of exactly what is missing
+  4. If verdict is "needs review" → call no further tools; stop
+  5. If verdict is "ready for work" → acknowledge the issue and describe the expected follow-up
+
+---
+
+## Phase 12 — GitHub Projects v2 Support
 
 React to project board changes (e.g. item status updated from Backlog → In Progress).
 
