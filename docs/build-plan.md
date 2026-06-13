@@ -171,12 +171,12 @@ Extend Phase 8 threading to filter for comments directed at the bot and respond 
 
 ### Steps
 
-- [ ] Add `senderIsBot: boolean` to `WebhookEvent` — computed in `normalizePayload` from `sender.type === 'Bot' || sender.login.endsWith('[bot]')`; set to `false` for all non-`issue_comment` event types
-- [ ] Add `BOT_MENTION_SLUG` environment variable to `orchestrator-lambda.ts` CDK construct — value: `@sdlc-agent-petty`
-- [ ] Add guards in `src/orchestrator/index.ts` before invoking the Converse loop:
+- [x] Add `senderIsBot: boolean` to `WebhookEvent` — computed in `normalizePayload` from `sender.type === 'Bot' || sender.login.endsWith('[bot]')`; set to `false` for all non-`issue_comment` event types
+- [x] Add `BOT_MENTION_SLUG` environment variable to `orchestrator-lambda.ts` CDK construct — value: `@sdlc-agent-petty`
+- [x] Add guards in `src/orchestrator/index.ts` before invoking the Converse loop:
   - If `event.senderIsBot` → return early (prevents self-reply loop)
   - If `event.eventType === 'issue_comment'` and comment body does not contain `BOT_MENTION_SLUG` → return early
-- [ ] Add `issue_comment.created` system prompt in `prompts.ts`:
+- [x] Add `issue_comment.created` system prompt in `prompts.ts`:
   - Agent is answering a specific directed question — not triaging
   - Instructs use of `get_issue` for issue context and prior conversation history already loaded
   - Instructs use of `post_comment` to reply

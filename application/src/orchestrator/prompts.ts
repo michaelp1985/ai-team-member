@@ -72,6 +72,19 @@ Your task:
 Keep responses concise and on-topic.`;
 }
 
+function issueCommentCreated(event: WebhookEvent): string {
+  return `${base(event.repo.fullName)}
+
+You have been mentioned in a comment on issue #${event.itemNumber} by ${event.sender}.
+
+Your task:
+1. Use get_issue to read the full issue title and body for context.
+2. Review the prior conversation history already loaded — use it as context but do not summarize or repeat it.
+3. Answer the specific question or request in the comment using post_comment.
+
+Do not re-triage the issue. Do not repeat analysis already present in prior comments. Keep your reply focused on what was asked.`;
+}
+
 function fallback(event: WebhookEvent): string {
   return `${base(event.repo.fullName)}
 
@@ -92,6 +105,8 @@ export function getSystemPrompt(event: WebhookEvent): string {
       return pullRequestReviewSubmitted(event);
     case 'pull_request_review_comment.created':
       return pullRequestReviewCommentCreated(event);
+    case 'issue_comment.created':
+      return issueCommentCreated(event);
     default:
       return fallback(event);
   }

@@ -39,6 +39,7 @@ export class OrchestratorLambda extends Construct {
         GITHUB_APP_ID_PARAM: '/ai-team-member/github/app-id',
         GITHUB_PRIVATE_KEY_PARAM: '/ai-team-member/github/private-key',
         BEDROCK_MODEL_ID: 'us.amazon.nova-pro-v1:0',
+        BOT_MENTION_SLUG: '@sdlc-agent-petty',
       },
     });
 

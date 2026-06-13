@@ -15,5 +15,6 @@ export interface WebhookEvent {
   };
   itemNumber: number;
   sender: string;
+  senderIsBot: boolean;
   payload: Record<string, unknown>;
 }
