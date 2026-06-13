@@ -1,8 +1,12 @@
-export type WebhookEventType =
-  | 'issues'
-  | 'pull_request'
-  | 'pull_request_review'
-  | 'pull_request_review_comment';
+const WEBHOOK_EVENT_TYPES = [
+  'issues',
+  'pull_request',
+  'pull_request_review',
+  'pull_request_review_comment',
+  'issue_comment',
+] as const;
+
+export type WebhookEventType = typeof WEBHOOK_EVENT_TYPES[number];
 
 export interface WebhookEvent {
   eventType: WebhookEventType;
@@ -17,15 +21,8 @@ export interface WebhookEvent {
   payload: Record<string, unknown>;
 }
 
-const SUPPORTED_EVENTS = new Set<string>([
-  'issues',
-  'pull_request',
-  'pull_request_review',
-  'pull_request_review_comment',
-]);
-
 export function isSupportedEvent(eventType: string): eventType is WebhookEventType {
-  return SUPPORTED_EVENTS.has(eventType);
+  return (WEBHOOK_EVENT_TYPES as readonly string[]).includes(eventType);
 }
 
 function extractRepo(body: Record<string, unknown>) {
@@ -69,6 +66,13 @@ export function normalizePayload(eventType: WebhookEventType, rawBody: Buffer): 
       return {
         eventType, action, repo, itemNumber: pr['number'] as number, sender,
         payload: { comment: body['comment'], pull_request: pr },
+      };
+    }
+    case 'issue_comment': {
+      const issue = body['issue'] as Record<string, unknown>;
+      return {
+        eventType, action, repo, itemNumber: issue['number'] as number, sender,
+        payload: { comment: body['comment'], issue },
       };
     }
   }
