@@ -132,7 +132,7 @@ Allow the agent to receive and normalize `issue_comment` events. GitHub fires `i
 
 ### Steps
 
-- [ ] Enable **Issue comments** event on the GitHub webhook
+- [x] Enable **Issue comments** event on the GitHub webhook
 - [x] Add `issue_comment` to `SUPPORTED_EVENTS` in `normalize.ts` and `WebhookEventType`
 - [x] Add `issue_comment` normalizer case in `normalizePayload` — payload shape: `issue.number`, `comment.body`, `repository`
 
