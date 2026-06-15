@@ -202,7 +202,37 @@ When a new issue is opened, evaluate whether it contains enough information to b
 
 ---
 
-## Phase 12 — GitHub Projects v2 Support
+## Phase 12 — Implementation Agent
+
+Enable the agent to check out code, implement a feature, and submit a pull request when triggered by `@sdlc-agent-petty implement` on an issue comment. See `docs/adr/001-implementation-trigger-mechanism.md` for trigger decision rationale and `src/orchestrator/implementation-agent.ts` for the agent prompt.
+
+### Prerequisites
+
+- [ ] Enable branch protection on `main` — require pull request + at least 1 human approval before merge; prevents the agent from pushing directly to `main` (manual GitHub repo settings)
+
+### Git Auth
+
+- [ ] Use GitHub App installation token for `git push` — authenticate over HTTPS using `https://x-access-token:<installation-token>@github.com/<owner>/<repo>.git`; token is fetched fresh from the GitHub App auth flow before each clone/push; no separate GitHub user account required
+
+### Infrastructure (CDK)
+
+- [ ] Add AWS CodeBuild project to the application CDK stack — Docker environment with Node.js, git pre-installed; IAM role with permissions to read SSM params (GitHub App credentials) and invoke Bedrock
+- [ ] Add EventBridge rule to capture CodeBuild build state change events (`SUCCEEDED`, `FAILED`) and route them to a new Lambda (completion notifier)
+- [ ] Add completion notifier Lambda — reads build metadata, posts a comment on the originating issue with the PR URL (success) or failure summary
+
+### Orchestrator
+
+- [ ] Add `implement` intent detection in `src/orchestrator/index.ts` — when `event.eventType === 'issue_comment'` and comment body contains `@sdlc-agent-petty implement`, route to CodeBuild trigger instead of the Converse loop
+- [ ] Add `start_implementation` tool — triggers the CodeBuild project with issue number and repo as environment variables; posts an acknowledgment comment on the issue
+- [ ] Wire `implementationAgentPrompt` from `src/orchestrator/implementation-agent.ts` into the CodeBuild buildspec agent invocation
+
+### GitHub App Permissions
+
+- [ ] Add **Contents: Read & Write** permission to the GitHub App — required to push feature branches
+
+---
+
+## Phase 13 — GitHub Projects v2 Support
 
 React to project board changes (e.g. item status updated from Backlog → In Progress).
 
