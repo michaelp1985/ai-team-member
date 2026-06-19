@@ -234,14 +234,20 @@ Enable the agent to check out code, implement a feature, and submit a pull reque
 
 ## Phase 13 — GitHub Projects v2 Support
 
-React to project board changes (e.g. item status updated from Backlog → In Progress).
+React to project board changes and automate agent assignment via a custom project field. When an item is moved to a designated swim lane (e.g. "Agent Queue"), the agent detects the status change, sets the custom "Agent Mode" field via GraphQL, and triggers the implementation workflow from Phase 12.
 
 > **Before starting:** enable the **Projects v2** event in GitHub webhook settings.
+
+### GitHub Project Setup (manual)
+
+- [ ] Add a custom **"Agent Mode"** single-select field to the project — options: `Owner`, `Collaborator`, `None`; this replaces the need to assign issues to a dedicated agent GitHub account (see ADR 001)
+- [ ] Create a designated swim lane / status (e.g. `Agent Queue`) that signals the agent should pick up the item
 
 ### Steps
 
 - [ ] Add `projects_v2_item` to supported event types in `normalize.ts` — payload shape differs from issues/PRs; item references a project item ID, not a standard issue number
 - [ ] Write normalizer for `projects_v2_item` payload
-- [ ] Add GitHub client functions for reading and updating project item fields (status, iteration, etc.) using the GraphQL API — Projects v2 is not available via Octokit REST
-- [ ] Add tool definitions and handlers for project operations
-- [ ] Write system prompt for `projects_v2_item.edited` (status change event)
+- [ ] Add GitHub client functions for reading and updating project item fields using the GraphQL API — Projects v2 is not available via Octokit REST
+- [ ] Add tool definitions and handlers for project field operations — including setting the "Agent Mode" custom field value
+- [ ] Add system prompt for `projects_v2_item.edited` — when status changes to the target swim lane, set "Agent Mode" to `Owner` via GraphQL and trigger the Phase 12 implementation workflow on the linked issue
+- [ ] Add system prompt for other status transitions — e.g. moving back out of "Agent Queue" clears "Agent Mode" to `None`
