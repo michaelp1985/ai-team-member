@@ -9,7 +9,7 @@ function base(repo: string): string {
 function issuesOpened(event: WebhookEvent): string {
   return `${base(event.repo.fullName)}
 
-A new issue (#${event.itemNumber}) has been opened by ${event.sender}.
+A new issue with item number (#${event.itemNumber}) has been opened by ${event.sender}.
 
 Your task:
 1. Use get_issue to read the issue title and body.
