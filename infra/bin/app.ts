@@ -5,5 +5,5 @@ import { FoundationStack } from '../lib/foundation-stack';
 const app = new cdk.App();
 
 new FoundationStack(app, 'FoundationStack', {
-  env: { account: 'REDACTED', region: 'us-east-2' },
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
 });

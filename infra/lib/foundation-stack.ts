@@ -28,12 +28,12 @@ export class FoundationStack extends cdk.Stack {
 
     lambdaRole.addToPolicy(new iam.PolicyStatement({
       actions: ['ssm:GetParameter'],
-      resources: [`arn:aws:ssm:us-east-2:REDACTED:parameter/ai-team-member/*`],
+      resources: [`arn:aws:ssm:us-east-2:${this.account}:parameter/ai-team-member/*`],
     }));
 
     lambdaRole.addToPolicy(new iam.PolicyStatement({
       actions: ['sqs:SendMessage'],
-      resources: [`arn:aws:sqs:us-east-2:REDACTED:ai-team-member-*`],
+      resources: [`arn:aws:sqs:us-east-2:${this.account}:ai-team-member-*`],
     }));
 
     lambdaRole.addToPolicy(new iam.PolicyStatement({
