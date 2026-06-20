@@ -1,0 +1,49 @@
+version: 0.2
+
+env:
+  variables:
+    BEDROCK_MODEL_ID: "us.amazon.nova-pro-v1:0"
+  parameter-store:
+    GITHUB_APP_ID: "/ai-team-member/github/app-id"
+    GITHUB_PRIVATE_KEY: "/ai-team-member/github/private-key"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - cd agent && npm ci && cd ..
+
+  pre_build:
+    commands:
+      - |
+        echo "Starting implementation for issue $ISSUE_NUMBER in $REPO_FULL_NAME"
+        GITHUB_TOKEN=$(node agent/scripts/get-install-token.js)
+        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO_FULL_NAME}.git repo
+        cd repo
+        git config user.email "sdlc-agent-petty[bot]@users.noreply.github.com"
+        git config user.name "sdlc-agent-petty[bot]"
+        git checkout -b "feature/issue-${ISSUE_NUMBER}-implementation"
+
+  build:
+    commands:
+      - echo "Running implementation agent..."
+      - cd repo && node $CODEBUILD_SRC_DIR/agent/scripts/implement.js
+
+  post_build:
+    commands:
+      - |
+        if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
+          cd repo
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes made by agent, skipping PR creation"
+          else
+            GITHUB_TOKEN=$(node $CODEBUILD_SRC_DIR/agent/scripts/get-install-token.js)
+            export GITHUB_TOKEN
+            git commit -m "implement issue #${ISSUE_NUMBER}"
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO_FULL_NAME}.git
+            git push origin "feature/issue-${ISSUE_NUMBER}-implementation"
+            node $CODEBUILD_SRC_DIR/agent/scripts/create-pr.js
+          fi
+        fi

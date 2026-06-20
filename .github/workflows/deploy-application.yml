@@ -55,6 +55,14 @@ jobs:
         working-directory: application/src/orchestrator
         run: npx tsc --build
 
+      - name: Install implementation-notifier dependencies
+        working-directory: application/src/implementation-notifier
+        run: npm ci
+
+      - name: Build implementation-notifier
+        working-directory: application/src/implementation-notifier
+        run: npx tsc --build
+
       - name: Deploy ApplicationStack
         working-directory: application
         run: npx cdk deploy ApplicationStack --require-approval never

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["es2022"],
+    "types": ["node"],
+    "outDir": "dist",
+    "rootDir": ".",
+    "paths": {
+      "github-client": ["../github-client/dist/index"]
+    },
+    "declaration": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "dist"],
+  "references": [{ "path": "../github-client" }]
+}

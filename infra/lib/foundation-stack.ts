@@ -41,6 +41,11 @@ export class FoundationStack extends cdk.Stack {
       resources: ['*'],
     }));
 
+    lambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['codebuild:StartBuild'],
+      resources: [`arn:aws:codebuild:us-east-2:${this.account}:project/ai-team-member-*`],
+    }));
+
     new cdk.CfnOutput(this, 'TableNameOutput', {
       exportName: 'ai-team-member-table-name',
       value: table.tableName,
