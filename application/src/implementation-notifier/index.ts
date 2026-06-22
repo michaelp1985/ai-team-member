@@ -23,9 +23,9 @@ function getEnvVar(vars: CodeBuildEnvVar[], name: string): string | undefined {
   return vars.find(v => v.name === name)?.value;
 }
 
-function buildConsoleUrl(buildId: string, region: string): string {
+function buildConsoleUrl(buildId: string, projectName: string, region: string): string {
   const encoded = encodeURIComponent(buildId);
-  return `https://${region}.console.aws.amazon.com/codesuite/codebuild/projects/ai-team-member-implementation/build/${encoded}/log`;
+  return `https://${region}.console.aws.amazon.com/codesuite/codebuild/projects/${projectName}/build/${encoded}/log`;
 }
 
 export async function handler(event: CodeBuildStateChangeEvent): Promise<void> {
@@ -40,7 +40,8 @@ export async function handler(event: CodeBuildStateChangeEvent): Promise<void> {
   if (!repoOwner || !repoName || isNaN(issueNumber)) return;
 
   const region = process.env['AWS_REGION'] ?? 'us-east-2';
-  const logsUrl = buildConsoleUrl(buildId, region);
+  const projectName = event.detail['project-name'];
+  const logsUrl = buildConsoleUrl(buildId, projectName, region);
 
   const body = status === 'STOPPED'
     ? `⚠️ Implementation was stopped before completing. [View build logs](${logsUrl})`

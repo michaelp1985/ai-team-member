@@ -28,12 +28,18 @@ export class ImplementationCodeBuild extends Construct {
 
     role.addToPolicy(new iam.PolicyStatement({
       actions: ['bedrock:InvokeModel'],
-      resources: ['*'],
+      resources: [
+        `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.amazon.nova-pro-v1:0`,
+        `arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0`,
+      ],
     }));
 
     role.addToPolicy(new iam.PolicyStatement({
-      actions: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
-      resources: ['*'],
+      actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+      resources: [
+        props.logGroup.logGroupArn,
+        `${props.logGroup.logGroupArn}:log-stream:*`,
+      ],
     }));
 
     this.project = new codebuild.Project(this, 'Project', {
@@ -55,7 +61,6 @@ export class ImplementationCodeBuild extends Construct {
         GITHUB_PRIVATE_KEY_PARAM: { value: '/ai-team-member/github/private-key' },
         BEDROCK_MODEL_ID: { value: 'us.amazon.nova-pro-v1:0' },
         AGENT_SPEC_PATH: { value: 'AGENT.md' },
-        // ISSUE_NUMBER, REPO_FULL_NAME, REPO_OWNER, REPO_NAME — passed as overrides at trigger time
       },
       logging: {
         cloudWatch: {
