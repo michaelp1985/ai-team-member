@@ -271,6 +271,8 @@ async function run() {
       try {
         return await bedrock.send(command);
       } catch (err) {
+
+        // Model error exceptions can be expected from time to time. we will allow and retry.
         if (err.name === 'ModelErrorException' && attempt < 2) {
           const delay = (attempt + 1) * 2000;
           console.log(`  ModelErrorException (attempt ${attempt + 1}), retrying in ${delay}ms`);
