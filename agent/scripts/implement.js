@@ -284,7 +284,7 @@ async function run() {
     }
   }
 
-  const MAX_ITERATIONS = 30;
+  const MAX_ITERATIONS = 60;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     console.log(`[iteration ${i + 1}]`);
