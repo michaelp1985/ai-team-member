@@ -140,3 +140,11 @@ export async function approvePullRequest(owner: string, repo: string, pullNumber
     client.pulls.createReview({ owner, repo, pull_number: pullNumber, event: 'APPROVE' }).then(r => r.data)
   );
 }
+
+export async function getPullRequestByBranch(owner: string, repo: string, branch: string): Promise<string | undefined> {
+  const client = await getClient(owner, repo);
+  const prs = await withRateLimitRetry(() =>
+    client.pulls.list({ owner, repo, head: `${owner}:${branch}`, state: 'open' }).then(r => r.data)
+  );
+  return prs[0]?.html_url;
+}

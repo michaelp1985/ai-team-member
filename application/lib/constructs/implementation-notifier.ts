@@ -47,7 +47,7 @@ export class ImplementationNotifier extends Construct {
         detailType: ['CodeBuild Build State Change'],
         detail: {
           'project-name': [props.codeBuildProjectName],
-          'build-status': ['FAILED', 'STOPPED'],
+          'build-status': ['SUCCEEDED', 'FAILED', 'STOPPED'],
         },
       },
     });
