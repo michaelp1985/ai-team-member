@@ -259,7 +259,20 @@ async function run() {
     },
   ];
 
+  function conversationSize(msgs) {
+    return msgs.reduce((sum, m) => {
+      return sum + m.content.reduce((s, c) => {
+        if (c.text) return s + c.text.length;
+        if (c.toolUse) return s + JSON.stringify(c.toolUse.input).length;
+        if (c.toolResult) return s + (c.toolResult.content?.[0]?.text?.length ?? 0);
+        return s;
+      }, 0);
+    }, 0);
+  }
+
   async function invokeModel(messages) {
+    const charCount = conversationSize(messages);
+    console.log(`  sending: ${messages.length} messages, ~${Math.round(charCount / 1000)}K chars`);
     const command = new ConverseCommand({
       modelId: MODEL_ID,
       system: [{ text: buildSystemPrompt(projectSpec) }],
@@ -271,8 +284,6 @@ async function run() {
       try {
         return await bedrock.send(command);
       } catch (err) {
-
-        // Model error exceptions can be expected from time to time. we will allow and retry.
         if (err.name === 'ModelErrorException' && attempt < 2) {
           const delay = (attempt + 1) * 2000;
           console.log(`  ModelErrorException (attempt ${attempt + 1}), retrying in ${delay}ms`);
@@ -304,8 +315,8 @@ async function run() {
       for (const block of assistantContent) {
         if (block.toolUse) {
           const { toolUseId, name, input } = block.toolUse;
-          console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)})`);
           const result = await executeTool(name, input);
+          console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)}) → ${String(result).length} chars`);
           toolResults.push({
             toolResult: {
               toolUseId,
