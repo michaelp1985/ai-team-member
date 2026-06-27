@@ -12,15 +12,16 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - cd agent && npm ci && cd ..
+      - cd $CODEBUILD_SRC_DIR/agent && npm ci
 
   pre_build:
     commands:
       - |
+        set -eo pipefail
         echo "Starting implementation for issue $ISSUE_NUMBER in $REPO_FULL_NAME"
-        GITHUB_TOKEN=$(node agent/scripts/get-install-token.js)
-        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO_FULL_NAME}.git repo
-        cd repo
+        GITHUB_TOKEN=$(node $CODEBUILD_SRC_DIR/agent/scripts/get-install-token.js)
+        git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO_FULL_NAME}.git $CODEBUILD_SRC_DIR/repo
+        cd $CODEBUILD_SRC_DIR/repo
         git config user.email "sdlc-agent-petty[bot]@users.noreply.github.com"
         git config user.name "sdlc-agent-petty[bot]"
         git checkout -b "feature/issue-${ISSUE_NUMBER}-implementation"
@@ -28,13 +29,13 @@ phases:
   build:
     commands:
       - echo "Running implementation agent..."
-      - cd repo && node $CODEBUILD_SRC_DIR/agent/scripts/implement.js
+      - cd $CODEBUILD_SRC_DIR/repo && node $CODEBUILD_SRC_DIR/agent/scripts/implement.js
 
   post_build:
     commands:
       - |
         if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
-          cd repo
+          cd $CODEBUILD_SRC_DIR/repo
           git add -A
           if git diff --cached --quiet; then
             echo "No changes made by agent, skipping PR creation"

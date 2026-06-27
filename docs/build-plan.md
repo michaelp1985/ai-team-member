@@ -228,7 +228,7 @@ Enable the agent to check out code, implement a feature, and submit a pull reque
 
 ### GitHub App Permissions
 
-- [ ] Add **Contents: Read & Write** permission to the GitHub App — required to push feature branches
+- [x] Add **Contents: Read & Write** permission to the GitHub App — required to push feature branches
 
 ---
 
