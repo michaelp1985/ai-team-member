@@ -6,6 +6,7 @@ on:
     paths:
       - application/**
       - buildspec.yml
+      - agent/**
 
 permissions:
   id-token: write
