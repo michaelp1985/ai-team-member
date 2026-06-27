@@ -1,0 +1,10 @@
+{
+  "name": "implementation-agent",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3",
+    "@octokit/auth-app": "^7",
+    "@octokit/rest": "^21"
+  }
+}

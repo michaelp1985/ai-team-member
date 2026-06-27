@@ -232,6 +232,44 @@ Enable the agent to check out code, implement a feature, and submit a pull reque
 
 ---
 
+## Exploration Phases
+
+Optimization work that runs in parallel with the main phase roadmap. These are experimental — validate the hypothesis before committing to a full implementation.
+
+---
+
+### Exploration 2.1 — Reduce `maxTokens` Per Inference Call
+
+**Hypothesis:** Most tool-use iterations (file reads, directory listings, shell commands) produce small assistant messages — typically a single tool call spec at 200–500 tokens. Setting `maxTokens: 8192` on every call is wasteful and inflates the conversation history added per round, compounding input cost quadratically.
+
+**Goal:** $0.10–$0.50 Bedrock cost for 90% of issues.
+
+**Approach:**
+- Profile real builds using Phase 9 observability (`bedrock.response` log line already captures `outputTokens` per iteration)
+- Set a lower default `maxTokens` for tool-use turns (candidate: 2,048) and a higher ceiling only for `end_turn` (implementation summary) turns
+- Make `maxTokens` configurable via SSM parameter alongside `timeout-minutes` so it can be tuned without a redeploy
+
+**Success metric:** Average output tokens per iteration drops below 1,000 with no regression in implementation quality.
+
+---
+
+### Exploration 2.2 — Context Window Pruning
+
+**Hypothesis:** The exploration phase of a build (steps 1–2: `get_issue`, `list_directory`, `read_file` back-and-forth) adds significant tokens to the conversation history that are no longer load-bearing once the agent moves into implementation. Sending the full history on every call drives input cost quadratically.
+
+**Goal:** Flatten the input token growth curve so a 30-iteration build costs closer to linear than quadratic.
+
+**Approach:**
+- After the agent transitions from exploration to implementation (heuristic: first `write_file` call), summarize or drop early exploration turns from the message history
+- Replace dropped turns with a single compressed summary message: files read, structure understood, decision made
+- Evaluate whether a sliding window (keep last N turns + system prompt) is sufficient, or whether a Bedrock summarization call is needed
+
+**Dependencies:** Exploration 2.1 (need real token data before pruning strategy can be sized correctly). Phase 9 observability required to measure impact.
+
+**Success metric:** Cumulative input tokens at iteration 30 is less than 3× the iteration-1 input, down from the current ~30× worst case.
+
+---
+
 ## Phase 13 — GitHub Projects v2 Support
 
 React to project board changes and automate agent assignment via a custom project field. When an item is moved to a designated swim lane (e.g. "Agent Queue"), the agent detects the status change, sets the custom "Agent Mode" field via GraphQL, and triggers the implementation workflow from Phase 12.

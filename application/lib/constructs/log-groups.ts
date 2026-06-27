@@ -7,6 +7,8 @@ export interface LogGroupsProps {}
 export class LogGroups extends Construct {
   readonly webhookReceiver: logs.LogGroup;
   readonly orchestrator: logs.LogGroup;
+  readonly implementationBuild: logs.LogGroup;
+  readonly implementationNotifier: logs.LogGroup;
 
   constructor(scope: Construct, id: string, _props: LogGroupsProps) {
     super(scope, id);
@@ -19,6 +21,18 @@ export class LogGroups extends Construct {
 
     this.orchestrator = new logs.LogGroup(this, 'Orchestrator', {
       logGroupName: '/aws/lambda/ai-team-member-orchestrator',
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.implementationBuild = new logs.LogGroup(this, 'ImplementationBuild', {
+      logGroupName: '/aws/codebuild/ai-team-member-implementation',
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    this.implementationNotifier = new logs.LogGroup(this, 'ImplementationNotifier', {
+      logGroupName: '/aws/lambda/ai-team-member-implementation-notifier',
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
