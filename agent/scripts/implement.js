@@ -316,7 +316,10 @@ async function run() {
         if (block.toolUse) {
           const { toolUseId, name, input } = block.toolUse;
           const result = await executeTool(name, input);
-          console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)}) → ${String(result).length} chars`);
+          const resultStr = String(result);
+          const snippet = resultStr.slice(0, 300).replace(/\n/g, '↵');
+          console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)}) → ${resultStr.length} chars`);
+          console.log(`    preview: ${snippet}${resultStr.length > 300 ? '…' : ''}`);
           toolResults.push({
             toolResult: {
               toolUseId,
