@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - application/**
+      - buildspec.yml
 
 permissions:
   id-token: write
