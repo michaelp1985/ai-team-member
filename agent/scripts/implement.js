@@ -120,7 +120,11 @@ async function executeTool(name, input) {
   switch (name) {
     case 'read_file': {
       try {
-        return fs.readFileSync(input.path, 'utf8');
+        const content = fs.readFileSync(input.path, 'utf8');
+        const MAX = 32_000;
+        return content.length > MAX
+          ? content.slice(0, MAX) + `\n\n[truncated — ${content.length} chars total]`
+          : content;
       } catch (err) {
         return `Error: ${err.message}`;
       }
@@ -255,18 +259,35 @@ async function run() {
     },
   ];
 
-  const MAX_ITERATIONS = 30;
-
-  for (let i = 0; i < MAX_ITERATIONS; i++) {
-    console.log(`[iteration ${i + 1}]`);
-
-    const response = await bedrock.send(new ConverseCommand({
+  async function invokeModel(messages) {
+    const command = new ConverseCommand({
       modelId: MODEL_ID,
       system: [{ text: buildSystemPrompt(projectSpec) }],
       messages,
       toolConfig: { tools: TOOL_SPECS },
       inferenceConfig: { maxTokens: 8192 },
-    }));
+    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await bedrock.send(command);
+      } catch (err) {
+        if (err.name === 'ModelErrorException' && attempt < 2) {
+          const delay = (attempt + 1) * 2000;
+          console.log(`  ModelErrorException (attempt ${attempt + 1}), retrying in ${delay}ms`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  const MAX_ITERATIONS = 30;
+
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    console.log(`[iteration ${i + 1}]`);
+
+    const response = await invokeModel(messages);
 
     const assistantContent = response.output.message.content;
     messages.push({ role: 'assistant', content: assistantContent });
