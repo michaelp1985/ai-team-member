@@ -98,7 +98,7 @@ const TOOL_SPECS = [
     toolSpec: {
       name: 'get_issue',
       description: 'Fetch the GitHub issue title, body, and labels.',
-      inputSchema: { json: { type: 'object', properties: {} } },
+      inputSchema: { json: { type: 'object', properties: {}, additionalProperties: false } },
     },
   },
   {
@@ -312,20 +312,43 @@ async function run() {
 
     if (response.stopReason === 'tool_use') {
       const toolResults = [];
+
       for (const block of assistantContent) {
+
         if (block.toolUse) {
           const { toolUseId, name, input } = block.toolUse;
-          const result = await executeTool(name, input);
-          const resultStr = String(result);
-          const snippet = resultStr.slice(0, 300).replace(/\n/g, '↵');
-          console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)}) → ${resultStr.length} chars`);
-          console.log(`    preview: ${snippet}${resultStr.length > 300 ? '…' : ''}`);
-          toolResults.push({
-            toolResult: {
-              toolUseId,
-              content: [{ text: String(result).slice(0, 100_000) }],
-            },
-          });
+
+          try {            
+            console.log(`Executing Tool: ${name}`)
+            const result = await executeTool(name, input);
+            const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+            const snippet = resultStr.slice(0, 300).replace(/\n/g, '↵');
+
+
+            console.log(`  tool: ${name}(${JSON.stringify(input).slice(0, 120)}) → ${resultStr.length} chars`);
+            console.log(`    preview: ${snippet}${resultStr.length > 300 ? '…' : ''}`);
+
+
+            toolResults.push({
+              toolResult: {
+                toolUseId,
+                content: [{ text: resultStr.slice(0, 100_000) }],
+              },
+            });
+          } catch (error) {
+
+            toolResults.push({
+              toolResult: {
+                toolUseId,
+                status: "error",
+                content: [
+                  {
+                    text: error.message
+                  }
+                ]
+              }
+            });
+          }
         }
       }
       messages.push({ role: 'user', content: toolResults });
