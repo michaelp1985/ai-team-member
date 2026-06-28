@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    BEDROCK_MODEL_ID: "us.amazon.nova-pro-v1:0"
+    BEDROCK_MODEL_ID: "anthropic.claude-haiku-4-5-20251001-v1:0"
   parameter-store:
     GITHUB_APP_ID: "/ai-team-member/github/app-id"
     GITHUB_PRIVATE_KEY: "/ai-team-member/github/private-key"
