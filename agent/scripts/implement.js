@@ -121,9 +121,9 @@ async function executeTool(name, input) {
     case 'read_file': {
       try {
         const content = fs.readFileSync(input.path, 'utf8');
-        const MAX = 32_000;
+        const MAX = 8_000;
         return content.length > MAX
-          ? content.slice(0, MAX) + `\n\n[truncated — ${content.length} chars total]`
+          ? content.slice(0, MAX) + `\n\n[truncated — ${content.length} chars total; use run_shell with grep/sed/tail to read specific sections]`
           : content;
       } catch (err) {
         return `Error: ${err.message}`;
