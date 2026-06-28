@@ -29,8 +29,12 @@ export class ImplementationCodeBuild extends Construct {
     role.addToPolicy(new iam.PolicyStatement({
       actions: ['bedrock:InvokeModel'],
       resources: [
+        // Amazon Nova Pro
         `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.amazon.nova-pro-v1:0`,
         `arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0`,
+        // Anthropic Claude Haiku 4.5
+        `arn:aws:bedrock:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:inference-profile/us.anthropic.claude-haiku-4-5-20251001-v1:0`,
+        `arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0`,
       ],
     }));
 
@@ -59,7 +63,7 @@ export class ImplementationCodeBuild extends Construct {
       environmentVariables: {
         GITHUB_APP_ID_PARAM: { value: '/ai-team-member/github/app-id' },
         GITHUB_PRIVATE_KEY_PARAM: { value: '/ai-team-member/github/private-key' },
-        BEDROCK_MODEL_ID: { value: 'us.amazon.nova-pro-v1:0' },
+        BEDROCK_MODEL_ID: { value: 'us.anthropic.claude-haiku-4-5-20251001-v1:0' },
         AGENT_SPEC_PATH: { value: 'AGENT.md' },
       },
       logging: {
