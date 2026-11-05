@@ -59,7 +59,8 @@ export async function handler(event: WebhookEvent): Promise<void> {
 
   const { repo, itemNumber } = event;
 
-  const history = await loadHistory(repo.fullName, itemNumber);
+  const isPr = ['pull_request', 'pull_request_review', 'pull_request_review_comment'].includes(event.eventType);
+  const history = await loadHistory(repo.fullName, itemNumber, isPr ? 'pr' : 'issue');
   const updatedMessages = await runConverseLoop(event, history);
   await saveHistory(repo.fullName, itemNumber, updatedMessages);
 }

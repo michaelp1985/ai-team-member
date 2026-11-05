@@ -32,6 +32,7 @@ export class ApplicationStack extends cdk.Stack {
       logGroup: logGroups.implementationNotifier,
       githubClientLayer: githubClientLayer.layer,
       codeBuildProjectName: implementationCodeBuild.project.projectName,
+      tableName: cdk.Fn.importValue('ai-team-member-table-name'),
     });
 
     const orchestrator = new OrchestratorLambda(this, 'OrchestratorLambda', {

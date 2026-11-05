@@ -10,6 +10,7 @@ export interface ImplementationNotifierProps {
   logGroup: logs.LogGroup;
   githubClientLayer: lambda.ILayerVersion;
   codeBuildProjectName: string;
+  tableName: string;
 }
 
 export class ImplementationNotifier extends Construct {
@@ -37,6 +38,7 @@ export class ImplementationNotifier extends Construct {
       environment: {
         GITHUB_APP_ID_PARAM: '/ai-team-member/github/app-id',
         GITHUB_PRIVATE_KEY_PARAM: '/ai-team-member/github/private-key',
+        TABLE_NAME: props.tableName,
       },
     });
 
