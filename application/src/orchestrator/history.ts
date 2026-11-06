@@ -40,15 +40,28 @@ export async function loadHistory(repoFullName: string, itemNumber: number, item
     ? (linkResult.Item?.['linkedIssueNumber'] as number | undefined)
     : (linkResult.Item?.['linkedPrNumber'] as number | undefined);
 
-  if (!linkedNumber) return primaryHistory;
+  if (!linkedNumber) {
+    console.log(JSON.stringify({
+      msg: 'loadHistory', repoFullName, itemType, itemNumber,
+      primaryCount: primaryHistory.length, linkedNumber: null, linkedCount: 0, totalCount: primaryHistory.length,
+    }));
+    return primaryHistory;
+  }
 
   const linkedResult = await dynamo.send(new GetCommand({ TableName: table, Key: buildKey(repoFullName, linkedNumber) }));
   const linkedHistory = (linkedResult.Item?.['messages'] as Message[] | undefined) ?? [];
 
   // Issue history always first so the model sees original requirements before implementation discussion
-  return itemType === 'pr'
+  const combined = itemType === 'pr'
     ? [...linkedHistory, ...primaryHistory]
     : [...primaryHistory, ...linkedHistory];
+
+  console.log(JSON.stringify({
+    msg: 'loadHistory', repoFullName, itemType, itemNumber,
+    primaryCount: primaryHistory.length, linkedNumber, linkedCount: linkedHistory.length, totalCount: combined.length,
+  }));
+
+  return combined;
 }
 
 export async function saveHistory(repoFullName: string, itemNumber: number, messages: Message[]): Promise<void> {

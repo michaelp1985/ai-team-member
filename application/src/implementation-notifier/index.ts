@@ -47,6 +47,8 @@ async function savePrIssueLink(repoFullName: string, issueNumber: number, prNumb
       Item: { pk: `repo#${repoFullName}`, sk: `link#pr#${prNumber}`, linkedIssueNumber: issueNumber, updatedAt: now },
     })),
   ]);
+
+  console.log(JSON.stringify({ msg: 'savePrIssueLink', repoFullName, issueNumber, prNumber }));
 }
 
 export async function handler(event: CodeBuildStateChangeEvent): Promise<void> {
